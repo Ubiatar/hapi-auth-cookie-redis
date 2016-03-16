@@ -39,8 +39,8 @@ exports.register = function (server, options, next) {
         getValidatedUser(request.payload.email, request.payload.password)
           .then(function (user) {
             if (user) {
-              request.auth.redis.set(user);
-              return reply('Login Successful!' + user.auth);
+              const auth = request.auth.redis.set(user);
+              return reply('Login Successful!' + auth);
             } else {
               return reply(Boom.unauthorized('Bad email or password'));
             }
@@ -48,7 +48,7 @@ exports.register = function (server, options, next) {
           })
           .catch(function (err) {
             console.error(err);
-            reply()
+            reply('test');
             //return reply(Boom.badImplementation());
           });
 
@@ -135,7 +135,7 @@ function getValidatedUser(email, password) {
     } else if (email === users[2].email && password === users[2].password) {
       return fulfill(grabCleanUser(users[2]));
     } else {
-      return reject(null);
+      return fulfill(null);
     }
   });
 }

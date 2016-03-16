@@ -13,7 +13,7 @@ internals.schema = joi.object({
   param: joi.string().default('auth'),
   host: joi.string().default('127.0.0.1'),
   port: joi.number().integer().min(1).max(65535).default(6379),
-  db: joi.number().integer().min(0).max(65535).default(0),
+  db: joi.number().integer().min(0).max(255).default(0),
   password: joi.string().default(''),
   ttl: joi.number().integer().min(0).default(3600),
   validateFunc: joi.func()
@@ -43,10 +43,11 @@ internals.implementation = (server, options) => {
         hoek.assert(session && typeof session === 'object', 'Invalid session');
         client.select(redisOptions.db);
         const key = session[settings.param];
-        delete session[key];
+        delete session[settings.param];
         client.set(`${settings.param}:${key}`, JSON.stringify(session));
         client.expire(`${settings.param}:${key}`, redisOptions.ttl);
         request.auth.artifacts = session;
+        return key;
       },
       expire: (key) => {
         if (key) {
@@ -62,37 +63,30 @@ internals.implementation = (server, options) => {
   });
   const scheme = {
     authenticate: (request, reply) => {
-      const unauthenticated = (err, result) => {
-        return reply(err, null, result);
-      };
-      const validate = () => {
-        const key = settings.param;
-        let token = '';
-        if (request.payload && request.payload[key]) {
-          token = request.payload[key];
-        } else if (request.query && request.query[key]) {
-          token = request.query[key];
+      const key = settings.param;
+      let token = '';
+      if (request.payload && request.payload[key]) {
+        token = request.payload[key];
+      } else if (request.query && request.query[key]) {
+        token = request.query[key];
+      }
+      client.select(redisOptions.db);
+      client.get(`${key}:${token}`, (error, session) => {
+        hoek.assert(!error, error);
+        session = JSON.parse(session || '{}');
+        if (!settings.validateFunc) {
+          return reply.continue({credentials: session, artifacts: session});
         }
-        client.select(redisOptions.db);
-        client.get(`${key}:${token}`, (error, session) => {
-          hoek.assert(!error, error);
-          session = JSON.parse(session || '{}');
-          if (!settings.validateFunc) {
-            return reply.continue({credentials: session, artifacts: session});
+        settings.validateFunc(session, (err, isValid, credentials) => {
+          if (err || !isValid) {
+            return reply(boom.unauthorized(`Invalid ${key}`), null, {
+              credentials: credentials || session,
+              artifacts: session
+            });
           }
-          settings.validateFunc(session, (err, isValid, credentials) => {
-            if (err || !isValid) {
-              return unauthenticated(boom.unauthorized(`Invalid ${key}`), {
-                credentials: credentials || session,
-                artifacts: session
-              });
-            }
-            return reply.continue({credentials: credentials || session, artifacts: session});
-          });
+          return reply.continue({credentials: credentials || session, artifacts: session});
         });
-        // return unauthenticated('test', {});
-      };
-      validate();
+      });
     }
   };
   return scheme;
