@@ -13,12 +13,6 @@ Subsequent requests containing the session token are authenticated and validated
 npm install --save hapi-auth-redis
 ```
 
-For `ES6`:
-
-```
-npm install --save hapi-auth-redis@0.0.4-beta
-```
-
 ### Configuration
 
 The `'redis'` scheme takes the following required options:
