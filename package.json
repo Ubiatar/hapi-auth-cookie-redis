@@ -1,8 +1,8 @@
 {
   "name": "hapi-auth-redis",
-  "version": "0.0.3",
+  "version": "0.0.4",
   "description": "Redis authentication plugin",
-  "main": "dist/index.js",
+  "main": "src/index.js",
   "scripts": {
     "start": "npm run compile && node example/server",
     "compile": "./node_modules/.bin/babel src --out-dir dist",

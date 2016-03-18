@@ -10,12 +10,6 @@ Subsequent requests containing the session token are authenticated and validated
 ### Installation
 
 ```
-npm install --save hapi-auth-redis
-```
-
-For `ES6`:
-
-```
 npm install --save hapi-auth-redis@0.0.4-beta
 ```
 
@@ -45,60 +39,3 @@ When the `redis` scheme is enabled on a route, the `request.auth.redis` objects 
 * expire(key) - clears the current session or session key where:
   * key - optional key string to remove a specific property of the session. If none provided, defaults to removing the entire session which is used to log the user out.
 
-### Run the example
-
-```
-npm install 
-node example/server
-```
-
-Then visit: <http://localhost:3000/example-one>
-
-Routes:
-
-* POST `/login`
-
-`email` and `password` required.
-
-Available Users:
-
-```
-[
-  {
-    id: 123,
-    email: 'admin@admin.com',
-    password: 'admin',
-    scope: ['user', 'admin', 'user-123']
-  },
-  {
-    id: 124,
-    email: 'guest@guest.com',
-    password: 'guest',
-    scope: ['user', 'user-124']
-  },
-  {
-    id: 125,
-    email: 'other@other.com',
-    password: 'other',
-    scope: ['user', 'user-125']
-  }
-]
-```
-
-* GET `/logout/{auth}`
-
-* GET `/example-one` 
-
-No required authorization.
-
-* GET `/example-two`
-
-`User` required authorization
-
-* GET `/example-three`
-
-`Admin` required authorization because the default is admin.
-
-* GET `/example-four/{id}`
-
-User specific authorization required.
