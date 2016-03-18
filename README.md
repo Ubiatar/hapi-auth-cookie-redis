@@ -10,7 +10,7 @@ Subsequent requests containing the session token are authenticated and validated
 ### Installation
 
 ```
-npm install --save hapi-auth-redis@0.0.4-beta
+npm install --save hapi-auth-redis@beta
 ```
 
 ### Configuration

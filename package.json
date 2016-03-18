@@ -1,12 +1,9 @@
 {
   "name": "hapi-auth-redis",
-  "version": "0.0.4",
+  "version": "0.0.5-beta",
   "description": "Redis authentication plugin",
   "main": "src/index.js",
   "scripts": {
-    "start": "npm run compile && node example/server",
-    "compile": "./node_modules/.bin/babel src --out-dir dist",
-    "prepublish": "npm run compile",
     "test": "./node_modules/.bin/ava",
     "test-cov-html": "./node_modules/.bin/nyc --reporter=html ./node_modules/.bin/ava",
     "coverall": "./node_modules/.bin/nyc npm test && ./node_modules/.bin/nyc report --reporter=text-lcov | ./node_modules/.bin/coveralls"
