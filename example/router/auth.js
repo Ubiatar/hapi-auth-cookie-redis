@@ -14,7 +14,14 @@ exports.register = function (server, options, next) {
     }
 
     // Set our server authentication strategy
-    server.auth.strategy('standard', 'redis', {});
+    server.auth.strategy('standard', 'redis', {
+      // validateFunc: function (user, callback) {
+      //   callback(null, false, user);
+      //   // Bcrypt.compare(password, user.password, (err, isValid) => {
+      //   //   callback(err, isValid, {id: user.id, name: user.name});
+      //   // });
+      // }
+    });
 
   });
 
@@ -38,9 +45,10 @@ exports.register = function (server, options, next) {
 
         getValidatedUser(request.payload.email, request.payload.password)
           .then(function (user) {
-            if (user) {
-              const auth = request.auth.redis.set(user);
-              return reply('Login Successful!' + auth);
+            if (user[1]) {
+              request.auth.redis.set(user[0], user[1]).then(function () {
+                return reply('Auth:' + user[0]);
+              }).catch(console.error);
             } else {
               return reply(Boom.unauthorized('Bad email or password'));
             }
@@ -51,18 +59,17 @@ exports.register = function (server, options, next) {
             reply('test');
             //return reply(Boom.badImplementation());
           });
-
       }
     }
   });
 
   server.route({
     method: 'GET',
-    path: '/logout',
+    path: '/logout/{auth}',
     config: {
       auth: false,
       handler: function (request, reply) {
-        const auth = request.query.auth;
+        const auth = request.params.auth;
         request.auth.redis.expire(auth);
         return reply('Logout Successful!');
 
@@ -122,9 +129,8 @@ function getValidatedUser(email, password) {
     // This is done to remove the password before being sent.
     function grabCleanUser(user) {
       var user = user;
-      user.auth = randStr(16);
       delete user.password;
-      return user;
+      return [randStr(16), user];
     };
 
     // very simple look up based on the user array above.

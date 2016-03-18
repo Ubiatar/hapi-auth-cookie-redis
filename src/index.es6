@@ -5,7 +5,7 @@ import hoek from 'hoek';
 // Http Error
 import boom from 'boom';
 // Redis Client
-import redis from 'redis';
+import redis from 'promise-redis';
 
 const internals = {};
 
@@ -32,29 +32,26 @@ internals.implementation = (server, options) => {
     ttl: settings.ttl,
     db: settings.db
   };
-  const client = redis.createClient(redisOptions);
+  const client = redis().createClient(redisOptions);
   client.on('error', (err) => {
     hoek.assert(!err, err);
   });
 
   server.ext('onPreAuth', (request, reply) => {
     request.auth.redis = {
-      set: (session) => {
+      set: async(key, session) => {
         hoek.assert(session && typeof session === 'object', 'Invalid session');
-        client.select(redisOptions.db);
-        const key = session[settings.param];
-        delete session[settings.param];
-        client.set(`${settings.param}:${key}`, JSON.stringify(session));
-        client.expire(`${settings.param}:${key}`, redisOptions.ttl);
+        await client.select(redisOptions.db);
+        await client.set(`${settings.param}:${key}`, JSON.stringify(session));
+        await client.expire(`${settings.param}:${key}`, redisOptions.ttl);
         request.auth.artifacts = session;
-        return key;
       },
-      expire: (key) => {
+      expire: async(key) => {
         if (key) {
           const session = request.auth.artifacts;
           hoek.assert(session, 'No active session to expire key from');
-          client.select(redisOptions.db);
-          client.expire(`${settings.param}:${key}`, 0);
+          await client.select(redisOptions.db);
+          await client.expire(`${settings.param}:${key}`, 0);
         }
         request.auth.artifacts = null;
       }
@@ -62,7 +59,7 @@ internals.implementation = (server, options) => {
     return reply.continue();
   });
   const scheme = {
-    authenticate: (request, reply) => {
+    authenticate: async(request, reply) => {
       const key = settings.param;
       let token = '';
       if (request.payload && request.payload[key]) {
@@ -70,22 +67,20 @@ internals.implementation = (server, options) => {
       } else if (request.query && request.query[key]) {
         token = request.query[key];
       }
-      client.select(redisOptions.db);
-      client.get(`${key}:${token}`, (error, session) => {
-        hoek.assert(!error, error);
-        session = JSON.parse(session || '{}');
-        if (!settings.validateFunc) {
-          return reply.continue({credentials: session, artifacts: session});
+      await client.select(redisOptions.db);
+      let session = await client.get(`${key}:${token}`);
+      session = JSON.parse(session || '{}');
+      if (!settings.validateFunc) {
+        return reply.continue({credentials: session, artifacts: session});
+      }
+      settings.validateFunc(request, session, (err, isValid, credentials) => {
+        if (err || !isValid) {
+          return reply(boom.unauthorized(`Invalid ${key}`), null, {
+            credentials: credentials || session,
+            artifacts: session
+          });
         }
-        settings.validateFunc(session, (err, isValid, credentials) => {
-          if (err || !isValid) {
-            return reply(boom.unauthorized(`Invalid ${key}`), null, {
-              credentials: credentials || session,
-              artifacts: session
-            });
-          }
-          return reply.continue({credentials: credentials || session, artifacts: session});
-        });
+        return reply.continue({credentials: credentials || session, artifacts: session});
       });
     }
   };
