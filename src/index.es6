@@ -7,6 +7,8 @@ import boom from 'boom';
 // Redis Client
 import redis from 'promise-redis';
 
+const uid = require('uid')
+
 const internals = {};
 
 internals.schema = joi.object({
@@ -16,7 +18,8 @@ internals.schema = joi.object({
   db: joi.number().integer().min(0).max(255).default(0),
   password: joi.string().default(''),
   ttl: joi.number().integer().min(0).default(3600),
-  validateFunc: joi.func()
+  validateFunc: joi.func(),
+  cookie: joi.string().min(3).max(20).default('auth')
 }).required();
 
 internals.implementation = (server, options) => {
@@ -39,36 +42,38 @@ internals.implementation = (server, options) => {
 
   server.ext('onPreAuth', (request, reply) => {
     request.auth.redis = {
-      set: async(key, session) => {
+      set: async(session) => {
         hoek.assert(session && typeof session === 'object', 'Invalid session');
         await client.select(redisOptions.db);
+        var key
+        var exists
+        do {
+          key = uid(64)
+          exists = await client.get(`${settings.param}:${key}`);
+        } while (exists)
         await client.set(`${settings.param}:${key}`, JSON.stringify(session));
         await client.expire(`${settings.param}:${key}`, redisOptions.ttl);
         request.auth.artifacts = session;
+        // @TODO: It's better to seal with Iron
+        reply.state(settings.cookie, key)
       },
-      expire: async(key) => {
-        if (key) {
-          const session = request.auth.artifacts;
-          hoek.assert(session, 'No active session to expire key from');
-          await client.select(redisOptions.db);
-          await client.expire(`${settings.param}:${key}`, 0);
-        }
+      expire: async() => {
+        const key = request.state[settings.cookie];
+        hoek.assert(key, 'No active session to expire key from');
+        await client.select(redisOptions.db);
+        await client.expire(`${settings.param}:${key}`, 0);
         request.auth.artifacts = null;
+        reply.unstate(settings.cookie);
       }
     };
     return reply.continue();
   });
   const scheme = {
     authenticate: async(request, reply) => {
-      const key = settings.param;
-      let token = '';
-      if (request.payload && request.payload[key]) {
-        token = request.payload[key];
-      } else if (request.query && request.query[key]) {
-        token = request.query[key];
-      }
+      const param = settings.param;
+      const key = request.state[settings.cookie];
       await client.select(redisOptions.db);
-      let session = await client.get(`${key}:${token}`);
+      let session = await client.get(`${param}:${key}`);
       session = JSON.parse(session || '{}');
       if (!settings.validateFunc) {
         return reply.continue({credentials: session, artifacts: session});

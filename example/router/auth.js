@@ -46,8 +46,8 @@ exports.register = function (server, options, next) {
         getValidatedUser(request.payload.email, request.payload.password)
           .then(function (user) {
             if (user[1]) {
-              request.auth.redis.set(user[0], user[1]).then(function () {
-                return reply('Auth:' + user[0]);
+              request.auth.redis.set(user[1]).then(function () {
+                return reply('OK!');
               }).catch(console.error);
             } else {
               return reply(Boom.unauthorized('Bad email or password'));
@@ -65,12 +65,11 @@ exports.register = function (server, options, next) {
 
   server.route({
     method: 'GET',
-    path: '/logout/{auth}',
+    path: '/logout',
     config: {
       auth: false,
       handler: function (request, reply) {
-        const auth = request.params.auth;
-        request.auth.redis.expire(auth);
+        request.auth.redis.expire();
         return reply('Logout Successful!');
 
       }

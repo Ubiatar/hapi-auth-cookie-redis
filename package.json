@@ -1,7 +1,7 @@
 {
-  "name": "hapi-auth-redis",
+  "name": "hapi-auth-cookie-redis",
   "version": "0.0.3",
-  "description": "Redis authentication plugin",
+  "description": "Redis authentication cookie plugin",
   "main": "dist/index.js",
   "scripts": {
     "start": "npm run compile && node example/server",
@@ -13,21 +13,22 @@
   },
   "repository": {
     "type": "git",
-    "url": "https://github.com/willin/hapi-auth-redis"
+    "url": "https://github.com/antoniogiordano/hapi-auth-redis"
   },
   "keywords": [
     "hapi",
     "plugin",
     "auth",
     "redis",
-    "session"
+    "session",
+    "cookie"
   ],
-  "author": "Willin Wang",
+  "author": "Antonio Giordano",
   "license": "MIT",
   "bugs": {
-    "url": "https://github.com/willin/hapi-auth-redis/issues"
+    "url": "https://github.com/antoniogiordano/hapi-auth-redis/issues"
   },
-  "homepage": "https://github.com/willin/hapi-auth-redis#readme",
+  "homepage": "https://github.com/antoniogiordano/hapi-auth-redis#readme",
   "devDependencies": {
     "babel-cli": "^6.6.5",
     "babel-plugin-transform-runtime": "^6.6.0",
@@ -37,9 +38,11 @@
     "hapi": "^13.2.1"
   },
   "dependencies": {
+    "babel-runtime": "^6.11.6",
     "boom": "^3.1.2",
     "hoek": "^3.0.4",
     "joi": "^8.0.4",
-    "promise-redis": "0.0.5"
+    "promise-redis": "0.0.5",
+    "uid": "0.0.2"
   }
 }

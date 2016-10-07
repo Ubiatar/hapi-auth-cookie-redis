@@ -1,8 +1,8 @@
-# hapi-auth-redis
+# hapi-auth-cookie-redis
 
-Redis authentication provides simple session management especially for API Services. The user has to be authenticated via other means, typically a RESTful API, and upon successful authentication the the client/app server receives a reply with a auth token.
+Redis authentication provides simple session management. The user has to be authenticated via other means, typically a RESTful API, and upon successful authentication the browser receives an authentication cookie.
 
-Subsequent requests containing the session token are authenticated and validated via the provided `validateFunc` in case the user info requires validation on each request.
+Subsequent requests containing the cookie are authenticated and validated via the provided `validateFunc` in case the user info requires validation on each request.
 
 
 ## Quick Start
@@ -10,7 +10,7 @@ Subsequent requests containing the session token are authenticated and validated
 ### Installation
 
 ```
-npm install --save hapi-auth-redis
+npm install --save hapi-auth-cookie-redis
 ```
 
 ### Configuration
@@ -22,6 +22,7 @@ The `'redis'` scheme takes the following required options:
 * `port` - the redis server port. Defaults to `6379`
 * `db` - the default redis db. Defaults to `0`
 * `password` - the redis auth_pass. Defaults to `''`
+* `cookie` - the cookie name. Defaults to `'auth'`
 * `ttl` - login expire time. Defaults to `3600` (seconds), `-1` for never, DO NOT use `0`
 * `validateFunc` - an optional session validation function used to validate the auth token on each request. Used to verify that the internal session state is still valid (e.g. user account still exists). The function has the signature function(request, session, callback) where:
   * request - is the Hapi request object of the request which is being authenticated.
@@ -33,11 +34,8 @@ The `'redis'` scheme takes the following required options:
 
 When the `redis` scheme is enabled on a route, the `request.auth.redis` objects is decorated with the following methods:
 
-* set(a, value) - sets a specific object key on the current session (which must already exist) where:
-  * key - session key string (Auth Token).
-  * value - value to assign key, must be a json object.
-* expire(key) - clears the current session or session key where:
-  * key - optional key string to remove a specific property of the session. If none provided, defaults to removing the entire session which is used to log the user out.
+* set(value) - sets a specific object on the current session where value is a json object containing all the info about the logged user
+* expire() - clears the current session
 
 ### Run the example
 
@@ -79,7 +77,7 @@ Available Users:
 ]
 ```
 
-* GET `/logout/{auth}`
+* GET `/logout`
 
 * GET `/example-one` 
 
