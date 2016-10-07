@@ -5,7 +5,10 @@ exports.register = function(server, options, next){
     path: '/example-one',
     config: {
       description: 'No required authorization.',
-      auth: false,
+      auth: {
+        strategies: ['standard'],
+        mode: 'try'
+      },
       handler: function(request, reply) {
 
         return reply('Success, You have accessed a public route!');

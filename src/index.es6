@@ -72,15 +72,16 @@ internals.implementation = (server, options) => {
     authenticate: async(request, reply) => {
       const param = settings.param;
       const key = request.state[settings.cookie];
+      console.log(key)
       await client.select(redisOptions.db);
       let session = await client.get(`${param}:${key}`);
+      if (session === null) return reply(boom.unauthorized(''));
       session = JSON.parse(session || '{}');
-      if (!settings.validateFunc) {
-        return reply.continue({credentials: session, artifacts: session});
-      }
+      if (!settings.validateFunc) return reply.continue({credentials: session, artifacts: session});
+      
       settings.validateFunc(request, session, (err, isValid, credentials) => {
         if (err || !isValid) {
-          return reply(boom.unauthorized(`Invalid ${key}`), null, {
+          return reply(boom.unauthorized(''), null, {
             credentials: credentials || session,
             artifacts: session
           });
