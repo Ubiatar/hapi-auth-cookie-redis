@@ -1,6 +1,6 @@
 {
   "name": "hapi-auth-cookie-redis",
-  "version": "0.0.3",
+  "version": "1.0.0",
   "description": "Redis authentication cookie plugin",
   "main": "dist/index.js",
   "scripts": {
