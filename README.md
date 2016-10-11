@@ -17,12 +17,12 @@ npm install --save hapi-auth-cookie-redis
 
 The `'redis'` scheme takes the following required options:
 
-* `param` - the request.payload or request.query param key. Defaults to `'auth'`
+* `param` - the Redis root key for session data storage. Defaults to `'auth'`. Change it to something more app-dependent if you have more applications on the same redis instance.
 * `host` - the redis server host. Defaults to `'127.0.0.1'`
 * `port` - the redis server port. Defaults to `6379`
 * `db` - the default redis db. Defaults to `0`
 * `password` - the redis auth_pass. Defaults to `''`
-* `cookie` - the cookie name. Defaults to `'auth'`
+* `cookie` - the cookie name stored on the client browser. Defaults to `'auth'`
 * `ttl` - login expire time. Defaults to `3600` (seconds), `-1` for never, DO NOT use `0`
 * `validateFunc` - an optional session validation function used to validate the auth token on each request. Used to verify that the internal session state is still valid (e.g. user account still exists). The function has the signature function(request, session, callback) where:
   * request - is the Hapi request object of the request which is being authenticated.

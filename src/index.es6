@@ -72,7 +72,6 @@ internals.implementation = (server, options) => {
     authenticate: async(request, reply) => {
       const param = settings.param;
       const key = request.state[settings.cookie];
-      console.log(key)
       await client.select(redisOptions.db);
       let session = await client.get(`${param}:${key}`);
       if (session === null) return reply(boom.unauthorized(''));
