@@ -19,7 +19,8 @@ internals.schema = joi.object({
   password: joi.string().default(''),
   ttl: joi.number().integer().min(0).default(3600),
   validateFunc: joi.func(),
-  cookie: joi.string().min(3).max(20).default('auth')
+  cookie: joi.string().min(3).max(20).default('auth'),
+  secure: joi.bool().default(true)
 }).required();
 
 internals.implementation = (server, options) => {
@@ -55,7 +56,9 @@ internals.implementation = (server, options) => {
         await client.expire(`${settings.param}:${key}`, redisOptions.ttl);
         request.auth.artifacts = session;
         // @TODO: It's better to seal with Iron
-        reply.state(settings.cookie, key)
+        reply.state(settings.cookie, key, {
+          isSecure: settings.secure
+        })
       },
       expire: async() => {
         const key = request.state[settings.cookie];
