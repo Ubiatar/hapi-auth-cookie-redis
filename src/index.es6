@@ -20,7 +20,8 @@ internals.schema = joi.object({
   ttl: joi.number().integer().min(0).default(3600),
   validateFunc: joi.func(),
   cookie: joi.string().min(3).max(20).default('auth'),
-  secure: joi.bool().default(true)
+  secure: joi.bool().default(true),
+  decoratorName: joi.string().min(3).max(30).default('redis')
 }).required();
 
 internals.implementation = (server, options) => {
@@ -42,7 +43,7 @@ internals.implementation = (server, options) => {
   });
 
   server.ext('onPreAuth', (request, reply) => {
-    request.auth.redis = {
+    request.auth[settings.decoratorName] = {
       set: async(session) => {
         hoek.assert(session && typeof session === 'object', 'Invalid session');
         await client.select(redisOptions.db);
